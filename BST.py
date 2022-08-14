@@ -1,11 +1,10 @@
 class BinarySearchTree:
     class Node:
-        def __init__(self, key=None, val=None, left=None, right=None, count=1):
+        def __init__(self, key=None, val=None, left=None, right=None):
             self.key = key
             self.val = val
             self.left = left
             self.right = right
-            self.count = count
 
     def __init__(self, key=None, val=None):
         self.root = self.Node(key, val)
@@ -25,10 +24,8 @@ class BinarySearchTree:
         if node is None or (node.key is None):
             return self.Node(key, val)
         if key > node.key:
-            node.count += 1
             node.right = self._put(key, val, node.right)
         elif key < node.key:
-            node.count += 1
             node.left = self._put(key, val, node.left)
         else:
             node.key = val
@@ -38,73 +35,36 @@ class BinarySearchTree:
     def put(self, key, val):
         self.root = self._put(key, val, self.root)
 
-    def min(self):
-        current = self.root
-        while current.left:
-            current = current.left
-        return current.val
+    def print_with_list(self):
+        arr = []
+        if self.root.val:
+            self._print_with_list(self.root, 1, arr)
+        else:
+            print("Nenhum evento.")
+        return arr
 
-    def max(self):
-        current = self.root
-        while current.right:
-            current = current.right
-        return current.val
-
-    def size(self):
-        return self.root.count
-
-    def level(self, key):
-        current = self.root
-        if current.key == None:
-            print ("No such key")
-            return
-        level = 1
-        while current.key != key:
-            if key > current.key:
-                current = current.right
-            else:
-                current = current.left
-            if not current:
-                print("No such key")
-                return
-            level += 1
-        return level
-
-    def depth(self):
-        return self._depth(self.root)
-
-    def _depth(self, node):
+    def _print_with_list(self, node, num, arr):
         if not node:
-            return 0
-        if (not node.left) and (not node.right):
-            return 1
-        return 1 + max(self._depth(node.left), self._depth(node.right))
+            return
 
-    def rank(self, key):
-        node = self.root
-        while (node is not None) and (node.key is not None):
-            if node.key == key:
-                return node.count
-            if node.key > key:
-                node = node.left
-            else:
-                node = node.right
-
-        return 0
+        self._print_with_list(node.left, num + 1, arr)
+        print((node.key).strftime(str(num) + ") %d/%m/%Y - %H:%M"), node.val)
+        arr.append(node.key)
+        self._print_with_list(node.right, num + 1, arr)
 
     def print(self):
-        if self.root.val:
-            self._print(self.root)
+        if self.root and self.root.val:
+            self._print(self.root, 1)
         else:
             print("Nenhum evento.")
 
-    def _print(self, node):
+    def _print(self, node, num):
         if not node:
             return
 
-        self._print(node.left)
-        print((node.key).strftime("%d/%m/%Y - %H:%M"), node.val)
-        self._print(node.right)
+        self._print(node.left, num + 1)
+        print((node.key).strftime(str(num) + ") %d/%m/%Y - %H:%M"), node.val)
+        self._print(node.right, num + 1)
 
     def toDic(self):
         dic = {}
@@ -118,3 +78,39 @@ class BinarySearchTree:
         dic[node.key.isoformat()] = node.val
         self._toDic(node.right, dic)
 
+    def minValueNode(self, node):
+        current = node
+
+        while (current.left is not None):
+            current = current.left
+
+        return current
+
+    def deleteNode(self, key):
+        self.root = self._deleteNode(self.root, key)
+
+    def _deleteNode(self, root, key):
+        if root is None:
+            return root
+
+        if key < root.key:
+            root.left = self._deleteNode(root.left, key)
+        elif (key > root.key):
+            root.right = self._deleteNode(root.right, key)
+        else:
+            if root.left is None:
+                temp = root.right
+                root = None
+                return temp
+
+            elif root.right is None:
+                temp = root.left
+                root = None
+                return temp
+            temp = self.minValueNode(root.right)
+
+            root.key = temp.key
+
+            root.right = self._deleteNode(root.right, temp.key)
+
+        return root

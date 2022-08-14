@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from json import JSONDecodeError
 from BST import BinarySearchTree
 
-
 def load_events():
     try:
         f = open("events.json", "r")
@@ -19,12 +18,8 @@ def load_events():
         events.put(datetime.fromisoformat(key), event[key])
     f.close()
 
-
-
 def print_events():
     events.print()
-
-
 
 def add_events():
     event = input("Digite data, hora e descrição separados por ';': ")
@@ -38,18 +33,18 @@ def add_events():
         event_time = event_time + timedelta(seconds=1)
     events.put(event_time, event[2])
 
-
-
-def dt_parser(dt):
-    if isinstance(dt, datetime):
-        return dt.isoformat()
-
 def save():
     events_dic = events.toDic()
     f = open("events.json", "w")
     f.write(json.dumps(events_dic))
     f.close()
 
+def delete_event():
+    events_list = events.print_with_list()
+    num = int(input("Digite o número do evento que quer deletar"))
+    print(events_list[num-1])
+    events.deleteNode(events_list[num - 1])
+    events.print()
 
 def exit_program():
     save()
@@ -69,6 +64,6 @@ while True:
         case 's':
             save()
         case 'd':
-            pass
+            delete_event()
         case 'q':
             exit_program()
