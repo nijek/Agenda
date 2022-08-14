@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from json import JSONDecodeError
 from BST import BinarySearchTree
 
 
@@ -7,11 +8,13 @@ def load_events():
     try:
         f = open("events.json", "r")
     except FileNotFoundError:
-        return ""
+        return
 
+    try:
+        event = json.loads(f.read())
+    except JSONDecodeError:
+        event = {}
 
-    event = json.loads(f.read())
-    print(event)
     for key in event.keys():
         events.put(datetime.fromisoformat(key), event[key])
     f.close()
@@ -69,6 +72,3 @@ while True:
             pass
         case 'q':
             exit_program()
-
-
-

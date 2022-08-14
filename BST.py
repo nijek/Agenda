@@ -12,7 +12,7 @@ class BinarySearchTree:
 
     def get(self, key):
         current = self.root
-        while current is not None:
+        while current and current.key:
             if current.key == key:
                 return current.val
             if current.key > key:
@@ -93,8 +93,10 @@ class BinarySearchTree:
         return 0
 
     def print(self):
-        node = self.root
-        self._print(node)
+        if self.root.val:
+            self._print(self.root)
+        else:
+            print("Nenhum evento.")
 
     def _print(self, node):
         if not node:
