@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from json import JSONDecodeError
-from BST import BinarySearchTree
+from BinarySearchTree import BinarySearchTree
 
 def load_events():
     try:
