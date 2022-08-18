@@ -1,11 +1,10 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from json import JSONDecodeError
-from BinarySearchTree import BinarySearchTree
 from uuid import uuid4
 from Key import Key
-
-
+from RedBlackTree import RedBlackTree
+from Tools import*
 def load_events():
     try:
         f = open("events.json", "r")
@@ -23,10 +22,6 @@ def load_events():
     f.close()
 
 
-def print_events():
-    events.print()
-
-
 def add_events():
     event = input("Digite data, hora e descrição separados por ';': ")
     event = event.split(';')
@@ -41,17 +36,21 @@ def add_events():
 
 
 def save():
-    events_dic = events.to_dic()
+    events_dic = tree_to_dic(events)
     f = open("events.json", "w")
     f.write(json.dumps(events_dic))
     f.close()
 
 
 def delete_event():
-    events_list = events.print_with_list()
+    events_list = print_events(events)
     num = int(input("Digite o número do evento que quer deletar"))
-    events.delete_node(events_list[num - 1])
-    events.print()
+    try:
+        events.delete(get_nth(events, num))
+        print_events(events)
+    except IndexError:
+        print_events("Esse índice não corresponde a nenhum evento")
+        return
 
 
 def exit_program():
@@ -59,14 +58,14 @@ def exit_program():
     quit()
 
 
-events = BinarySearchTree()
+events = RedBlackTree()
 load_events()
 
 while True:
     options = input("v: ver eventos, a: adicionar evento, s: salvar, d: deletar evento, q: sair> ")
     match (options):
         case 'v':
-            print_events()
+            print_events(events)
         case 'a':
             add_events()
         case 's':
