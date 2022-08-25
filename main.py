@@ -7,6 +7,7 @@ from sys import argv
 from Key import Key
 from RedBlackTree import RedBlackTree
 from Tools import *
+from dbx import *
 
 
 def load_events():
@@ -19,6 +20,7 @@ def load_events():
         event = json.loads(f.read())
     except JSONDecodeError:
         event = {}
+    events.clear_tree()
     for date in event.keys():
         try:
             uuid = UUID(date[19:])
@@ -48,6 +50,8 @@ def save():
     events_dic = tree_to_dic(events)
     f = open("events.json", "w")
     f.write(json.dumps(events_dic))
+    if dbx.is_logged():
+        dbx.upload_file()
     f.close()
 
 
@@ -73,6 +77,23 @@ def exit_program():
     quit()
 
 
+def sync_events():
+    if not dbx.is_logged():
+        dbx.login()
+
+    op = input("b: baixar a versão do dropbox, u: upar a versão para o dropbox, m:ver menu principal: ")
+    if op == "b":
+        dbx.download_file()
+        load_events()
+    elif op == "u":
+        save()
+        dbx.upload_file()
+    elif op == "m":
+        return
+    return
+
+
+dbx = Dbx()
 events = RedBlackTree()
 load_events()
 
@@ -93,8 +114,10 @@ if len(argv) > 1:
 
 
 else:
+
     while True:
-        options = input("v: ver eventos, a: adicionar evento, s: salvar, d: deletar evento, q: sair> ")
+        options = input(
+            "v: ver eventos, a: adicionar evento, s: salvar, d: deletar evento, sync: sincronizar, q: sair> ")
         match options:
             case 'v':
                 print_events(events)
@@ -106,3 +129,5 @@ else:
                 delete_event()
             case 'q':
                 exit_program()
+            case 'sync':
+                sync_events()

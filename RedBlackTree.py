@@ -109,6 +109,9 @@ class RedBlackTree:
     def __init__(self):
         self.root = None
 
+    def clear_tree(self):
+        self.root = None
+
     def get_root(self):
         return self.root
 
