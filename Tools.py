@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 def print_events(tree):
     count = 0
     for (key, val) in tree.in_order_traversal():

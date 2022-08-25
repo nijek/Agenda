@@ -1,13 +1,10 @@
 """
 Fortemente inspirada na implementação do professor Sedgewick
 https://algs4.cs.princeton.edu/33balanced/RedBlackBST.java.html
-
-
 """
 
 RED = True
 BLACK = False
-
 
 # static helpers
 def is_red(x):
@@ -93,9 +90,15 @@ def balance(node):
     return node
 
 
+def _height(node):
+    if node is None:
+        return -1
+    return 1 + max(_height(node.left), _height(node.right))
+
+
 class RedBlackTree:
     class Node:
-        def __init__(self, key=None, val=None, color=None, size=None):
+        def __init__(self, key=None, val=None, color=None, size=0):
             self.key = key
             self.val = val
             self.left = None
@@ -105,13 +108,9 @@ class RedBlackTree:
 
     def __init__(self):
         self.root = None
-        self.count = 0
 
     def get_root(self):
         return self.root
-
-    def get_count(self):
-        return self.count
 
     # helpers
     def tree_size(self):
@@ -141,7 +140,6 @@ class RedBlackTree:
 
     def _put(self, node, key, val):
         if node is None:
-            self.count += 1
             return self.Node(key, val, RED, 1)
         if key < node.key:
             node.left = self._put(node.left, key, val)
@@ -163,7 +161,7 @@ class RedBlackTree:
     def delete(self, key):
         if (self.root is None) or (key is None) or (not self.contains(key)):
             return
-        self.count -= 1
+
         if (not is_red(self.root.left)) and (not is_red(self.root.right)):
             self.root.color = RED
 
@@ -241,13 +239,5 @@ class RedBlackTree:
         yield node.key
         yield from self._in_order_keys(node.right)
 
-'''
-a = RedBlackTree()
-for i in range(10):
-    a.put(i, 'csa')
-g = a.in_order_traversal()
-for (a,b) in g:
-    print(a, b)
-for (a,b) in g:
-    print(a, b)
-'''
+    def height(self):
+        return _height(self.root)
