@@ -1,13 +1,31 @@
-from datetime import datetime
+from time import sleep
+from datetime import timedelta
 import json
 from json import JSONDecodeError
 from uuid import uuid4, UUID
 from sys import argv
+from threading import *
+from playsound import playsound
 
 from Key import Key
 from RedBlackTree import RedBlackTree
 from Tools import *
 from dbx import *
+from os import listdir
+from os.path import isfile, join
+
+alarm_on = False
+op_it_string = "v: ver eventos, a: adicionar, s: salvar, d: deletar, " \
+               "escolher som do alarme: e, sync: sincronizar, o: parar alarme, q: sair> "
+alarms_path = "alarm_sounds/"
+chosen_ring = alarms_path + "mixkit-scanning-sci-fi-alarm-905.mp3"
+
+
+def load_alarms():
+    alarms = [f for f in listdir(alarms_path) if isfile(join(alarms_path, f))]
+    # todo
+    for alarm in alarms:
+        pass
 
 
 def load_events():
@@ -57,7 +75,7 @@ def save():
 
 def delete_event(event=None):
     if event is None:
-        events_list = print_events(events)
+        print_events(events)
         num = int(input("Digite o número do evento que quer deletar"))
         event_key = get_nth(events, num)
 
@@ -79,7 +97,10 @@ def exit_program():
 
 def sync_events():
     if not dbx.is_logged():
-        dbx.login()
+        try:
+            dbx.login()
+        except Exception:
+            return
 
     op = input("b: baixar a versão do dropbox, u: upar a versão para o dropbox, m:ver menu principal: ")
     if op == "b":
@@ -91,6 +112,58 @@ def sync_events():
     elif op == "m":
         return
     return
+
+
+def alarm():
+    key_id = UUID("dc1ed4b2-1442-46d9-8ebe-3bbb5688871b")
+    while True:
+        events_now = events.nodes_between(Key(datetime.now() - timedelta(seconds=60), key_id),
+                                          Key(datetime.now() + timedelta(seconds=60), key_id))
+
+        if events_now:
+            alarm_ring(events_now)
+        sleep(60)
+
+
+def alarm_ring(events_now):
+    print("ALARME")
+
+    for event in events_now:
+        print(event.key.date, event.val)
+    ring()
+    return
+
+
+def ring():
+    global alarm_on
+    alarm_on = True
+    while alarm_on:
+        playsound(chosen_ring)
+    return
+
+
+def options():
+    while True:
+
+        option = input(op_it_string)
+        match option:
+            case 'v':
+                print_events(events)
+            case 'a':
+                add_events()
+            case 'e':
+                load_alarms()
+            case 's':
+                save()
+            case 'd':
+                delete_event()
+            case 'q':
+                exit_program()
+            case 'sync':
+                sync_events()
+            case 'o':
+                global alarm_on
+                alarm_on = False
 
 
 dbx = Dbx()
@@ -111,23 +184,8 @@ if len(argv) > 1:
         i = i + 1
     exit_program()
 
-
-
 else:
-
-    while True:
-        options = input(
-            "v: ver eventos, a: adicionar evento, s: salvar, d: deletar evento, sync: sincronizar, q: sair> ")
-        match options:
-            case 'v':
-                print_events(events)
-            case 'a':
-                add_events()
-            case 's':
-                save()
-            case 'd':
-                delete_event()
-            case 'q':
-                exit_program()
-            case 'sync':
-                sync_events()
+    alarm_thread = Thread(target=alarm, daemon=True)
+    options_thread = Thread(target=options)
+    alarm_thread.start()
+    options_thread.start()

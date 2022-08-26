@@ -25,8 +25,7 @@ class Dbx:
         try:
             oauth_result = auth_flow.finish(auth_code)
         except Exception as e:
-            print('Error: %s' % (e,))
-            exit(1)
+            print('Erro: %s' % (e,))
 
         with dropbox.Dropbox(oauth2_refresh_token=oauth_result.refresh_token, app_key=APP_KEY) as _dbx:
             self.dbx = _dbx

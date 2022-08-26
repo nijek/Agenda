@@ -2,9 +2,11 @@
 Fortemente inspirada na implementação do professor Sedgewick
 https://algs4.cs.princeton.edu/33balanced/RedBlackBST.java.html
 """
+import datetime
 
 RED = True
 BLACK = False
+
 
 # static helpers
 def is_red(x):
@@ -29,6 +31,25 @@ def _get(node, key):
         else:
             return node.val
     return None
+
+
+def _get_ceiling(node, key):
+    # Base Case
+    if node is None:
+        return None
+
+    if node.key == key:
+        return node.key
+
+        # If root's key is smaller, ceil must be in right subtree
+    if node.key < key:
+        return _get_ceiling(node.right, key)
+
+        # Else, either left subtree or root has the ceil value
+    val = _get_ceiling(node.left, key)
+    if val is None or val < key:
+        return node.key
+    return val
 
 
 def rotate_left(node):
@@ -128,6 +149,72 @@ class RedBlackTree:
             return None
         return _get(self.root, key)
 
+    def node_max(self):
+        if self.root is None:
+            return None
+        node = self.root
+        while node.right is not None:
+            node = node.right
+        return node
+
+    def get_ceiling(self, key):
+        if key is None:
+            print("Erro: key = None")
+            return None
+        ceil = self.ceil(self.root, key)
+        if ceil is None:
+            return ceil
+        return ceil if ceil.key >= key else None
+
+    def get_floor(self, key):
+        if key is None:
+            print("Erro: key = None")
+            return None
+        floor = self.floor(self.root, key)
+        if floor is None:
+            return floor
+        return floor if floor.key <= key else None
+
+    def floor(self, node, key):
+
+        if node is None:
+            return self.node_max()
+
+        """ If root.data is equal to key """
+        if (node.key == key):
+            return node
+
+        """ If root.data is greater than the key """
+        if (node.key > key):
+            return self.floor(node.left, key)
+
+        """ Else, the floor may lie in right subtree
+        or may be equal to the root"""
+        floor_value = self.floor(node.right, key)
+        if floor_value is None:
+            return node if node.key <= key else None
+        return floor_value if (floor_value.key <= key) else node
+
+    def ceil(self, node, key):
+
+        if node is None:
+            return self.node_min()
+
+        """ If root.data is equal to key """
+        if node.key == key:
+            return node
+
+        """ If root.data is greater than the key """
+        if node.key < key:
+            return self.ceil(node.right, key)
+
+        """ Else, the floor may lie in right subtree
+        or may be equal to the root"""
+        ceil_value = self.ceil(node.left, key)
+        if ceil_value is None:
+            return node if node.key >= key else None
+        return ceil_value if (ceil_value.key >= key) else node
+
     def contains(self, key):
         return self.get(key) is not None
 
@@ -193,11 +280,17 @@ class RedBlackTree:
                 node.right = self._delete(node.right, key)
         return balance(node)
 
-    def min(self):
+    def tree_min(self):
         if self.is_empty():
             print("Vazio")
             return
         return self._min(self.root).key
+
+    def node_min(self):
+        if self.is_empty():
+            print("Vazio")
+            return
+        return self._min(self.root)
 
     def _min(self, node):
         if node.left is None:
@@ -225,6 +318,20 @@ class RedBlackTree:
     def in_order_traversal(self):
         return self._in_order(self.root)
 
+    def nodes_between(self, min_key, max_key):
+        nodes = []
+        for node in self._nodes_between(self.root, min_key, max_key):
+            nodes.append(node)
+        return nodes
+
+    def _nodes_between(self, node, min_key, max_key):
+        if node is None:
+            return
+        yield from self._nodes_between(node.left, min_key, max_key)
+        if min_key <= node.key <= max_key:
+            yield node
+        yield from self._nodes_between(node.right, min_key, max_key)
+
     def _in_order(self, node):
         if node is None:
             return
@@ -244,3 +351,23 @@ class RedBlackTree:
 
     def height(self):
         return _height(self.root)
+
+'''
+t = RedBlackTree()
+for i in range(100):
+    t.put(i, "teste" + str(i))
+print("---")
+a = t.nodes_between(10, 20)
+for node in a:
+    print(node.key)
+
+
+for i in {1, 3, 5, 7, 9, 11}:
+    print(i)
+    j = t.get_ceiling(i)
+    k = t.get_floor(i)
+    if j is not None:
+        print("ceil de " + str(i) + " = " + str(t.get_ceiling(i).key))
+    if k is not None:
+        print("floor de " + str(i) + " = " + str(t.get_floor(i).key))
+'''

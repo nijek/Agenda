@@ -11,3 +11,9 @@ class Key:
 
     def __gt__(self, other):
         return (self.date > other.date) or (self.date == other.date and self.uuid > other.uuid)
+
+    def __ge__(self, other):
+        return (self.date >= other.date) or (self.date == other.date and self.uuid >= other.uuid)
+
+    def __le__(self, other):
+        return (self.date <= other.date) or (self.date == other.date and self.uuid <= other.uuid)

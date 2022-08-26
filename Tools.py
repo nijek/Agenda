@@ -6,7 +6,6 @@ def print_events(tree):
         count += 1
         print(key.date.strftime(str(count) + ") %d/%m/%Y - %H:%M  ") + val)
 
-
 def tree_to_dic(tree):
     dic = {}
     for (key, val) in tree.in_order_traversal():
