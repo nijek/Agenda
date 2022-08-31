@@ -6,7 +6,6 @@ from uuid import uuid4, UUID
 from sys import argv
 from threading import *
 from playsound import playsound
-
 from Key import Key
 from RedBlackTree import RedBlackTree
 from Tools import *
@@ -19,6 +18,36 @@ op_it_string = "v: ver eventos, a: adicionar, s: salvar, d: deletar, " \
                "escolher som do alarme: e, sync: sincronizar, o: parar alarme, q: sair> "
 alarms_path = "alarm_sounds/"
 chosen_ring = alarms_path + "mixkit-scanning-sci-fi-alarm-905.mp3"
+options_array = ["ver eventos", "adicionar eventos",
+          "salvar", "deletar", "sincronizar com dropbox", "parar alarme", "sair"]
+
+def button_clicked(option):
+    print("Buttom clicked: " + option)
+    options(option)
+
+
+def options(option=None):
+    if option is None:
+        option = input(op_it_string)
+    match option:
+        case 'v':
+            print_events(events)
+        case 'a':
+            add_events()
+        case 'e':
+            load_alarms()
+        case 's':
+            save()
+        case 'd':
+            delete_event()
+        case 'q':
+            exit_program()
+        case 'sync':
+            sync_events()
+        case 'o':
+            global alarm_on
+            alarm_on = False
+            pass
 
 
 def load_alarms():
@@ -127,10 +156,33 @@ def alarm():
 
 def alarm_ring(events_now):
     print("ALARME")
+    alarm_window = tk.Tk()
+    alarm_window.title("ALARME")
+    window_width = 500
+    window_height = 200
 
+
+    screen_width = alarm_window.winfo_screenwidth()
+    screen_height = alarm_window.winfo_screenheight()
+
+
+    center_x = int(screen_width / 2 - window_width / 2)
+    center_y = int(screen_height / 2 - window_height / 2)
+
+
+    alarm_window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+    events_alarm = []
     for event in events_now:
-        print(event.key.date, event.val)
-    ring()
+        events_alarm.append((event.key, event.val))
+    ring_thread = Thread(target=ring, daemon=True)
+    ring_thread.start()
+    i = grid_print(alarm_window, events_alarm, height= 40, width=40)
+    ttk.Button(alarm_window, text="Ok", width=20, command=lambda: [button_clicked("o"), alarm_window.destroy()]).pack()
+
+    alarm_window.lift()
+    alarm_window.attributes('-topmost', True)
+
+    alarm_window.mainloop()
     return
 
 
@@ -141,34 +193,27 @@ def ring():
         playsound(chosen_ring)
     return
 
-
-def options():
-    while True:
-
-        option = input(op_it_string)
-        match option:
-            case 'v':
-                print_events(events)
-            case 'a':
-                add_events()
-            case 'e':
-                load_alarms()
-            case 's':
-                save()
-            case 'd':
-                delete_event()
-            case 'q':
-                exit_program()
-            case 'sync':
-                sync_events()
-            case 'o':
-                global alarm_on
-                alarm_on = False
-
-
 dbx = Dbx()
 events = RedBlackTree()
 load_events()
+
+#Parte gráfica
+
+window = tk.Tk()
+window.title("Agenda")
+window_width = 800
+window_height = 600
+
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+
+center_x = int(screen_width/2 - window_width / 2)
+center_y = int(screen_height/2 - window_height / 2)
+
+window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+window.minsize(200, 300)
+window.maxsize(screen_width, screen_height)
+
 
 if len(argv) > 1:
     i = 0
@@ -186,6 +231,13 @@ if len(argv) > 1:
 
 else:
     alarm_thread = Thread(target=alarm, daemon=True)
-    options_thread = Thread(target=options)
     alarm_thread.start()
-    options_thread.start()
+
+    grid_print(window, events)
+    ttk.Button(window, text="ver eventos", width=20, command=lambda: button_clicked("v")).pack(pady=2)
+    ttk.Button(window, text="adicionar evento",width=20, command=lambda: button_clicked("a")).pack(pady=2)
+    ttk.Button(window, text="deletar evento", width=20,command=lambda: button_clicked("d")).pack(pady=2)
+    ttk.Button(window, text="sincronizar com dropbox", width=20,command=lambda: button_clicked("sync")).pack(pady=2)
+    ttk.Button(window, text="parar alarme", width=20,command=lambda: button_clicked("o")).pack(pady=2)
+    ttk.Button(window, text="sair", width=20,command=lambda: button_clicked("q")).pack(pady=2)
+    window.mainloop()

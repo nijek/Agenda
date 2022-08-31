@@ -9,7 +9,7 @@ for i in range(10):
     dic[time + str(uuid4())] = "teste" + str(i)
 
 
-for i in range(5):
+for i in range(50):
 
     time = (datetime.now() + timedelta(minutes=i)).isoformat()
     dic[time + str(uuid4())] = "testenow" + str(i)
