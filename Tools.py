@@ -12,7 +12,6 @@ def get_events(container):
     for (key, val) in y:
         count += 1
         events_list.append(key.date.strftime(str(count) + ") %d/%m/%Y - %H:%M  ") + val)
-    print(">>>", type(events_list))
     return events_list
 
 def get_each_event(container):
@@ -53,7 +52,7 @@ def tree_to_dic(tree):
 
 
 def get_nth(tree, n):
-    count = 1
+    count = 0
     for key in tree.in_order_traversal_keys():
         if count == n:
             return key
