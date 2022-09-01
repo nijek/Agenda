@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 def get_events(container):
-    text = ""
+    events_list = []
     count = 0
     if type(container) is list:
         y = container
@@ -11,8 +11,9 @@ def get_events(container):
         y = container.in_order_traversal()
     for (key, val) in y:
         count += 1
-        text += key.date.strftime(str(count) + ") %d/%m/%Y - %H:%M  ") + val + "\n"
-    return (text, count)
+        events_list.append(key.date.strftime(str(count) + ") %d/%m/%Y - %H:%M  ") + val)
+    print(">>>", type(events_list))
+    return events_list
 
 def get_each_event(container):
     count = 0
@@ -33,16 +34,16 @@ def print_events(tree):
 
 def grid_print(window, container, height=40, width=70):
     i = 1
-
+    events_list = get_events(container)
+    print(events_list)
+    events_list_sv = tk.StringVar(master=window, value=events_list)
     scroll_bar = tk.Scrollbar(window)
     scroll_bar.pack(side=tk.RIGHT, fill=tk.Y)
-    events_text = tk.Text(window, height=height, width=width, yscrollcommand=scroll_bar.set)
+    events_text = tk.Listbox(window, listvariable=events_list_sv, selectmode='extended', yscrollcommand=scroll_bar.set, height=height, width=width)
     events_text.pack(side=tk.RIGHT)
     scroll_bar.config(command=events_text.yview())
-    events = get_events(container)[0]
-    events_text.insert(tk.END, events)
-    i += 1
-    return i
+
+    return events_text
 
 def tree_to_dic(tree):
     dic = {}

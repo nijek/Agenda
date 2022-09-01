@@ -1,3 +1,4 @@
+import tkinter
 from time import sleep
 from datetime import timedelta
 import json
@@ -19,7 +20,8 @@ op_it_string = "v: ver eventos, a: adicionar, s: salvar, d: deletar, " \
 alarms_path = "alarm_sounds/"
 chosen_ring = alarms_path + "mixkit-scanning-sci-fi-alarm-905.mp3"
 options_array = ["ver eventos", "adicionar eventos",
-          "salvar", "deletar", "sincronizar com dropbox", "parar alarme", "sair"]
+                 "salvar", "deletar", "sincronizar com dropbox", "parar alarme", "sair"]
+currently_selected = []
 
 def button_clicked(option):
     print("Buttom clicked: " + option)
@@ -154,21 +156,36 @@ def alarm():
         sleep(60)
 
 
+def refresh_listbox(window, listbox, events):
+    listbox.delete(0, tk.END)
+    events_list = get_events(events)
+    for event in events_list:
+        listbox.insert(tk.END, event)
+
+
+def delete_events(events_now):
+    for event in events_now:
+        events.delete(event.key)
+
+
+def delete_selected_events(listbox, events_list):
+    for event in listbox.curselection():
+        events.delete(events_list[event].key)
+
+
+
 def alarm_ring(events_now):
     print("ALARME")
     alarm_window = tk.Tk()
     alarm_window.title("ALARME")
-    window_width = 500
-    window_height = 200
-
+    window_width = 550
+    window_height = 250
 
     screen_width = alarm_window.winfo_screenwidth()
     screen_height = alarm_window.winfo_screenheight()
 
-
     center_x = int(screen_width / 2 - window_width / 2)
     center_y = int(screen_height / 2 - window_height / 2)
-
 
     alarm_window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
     events_alarm = []
@@ -176,8 +193,20 @@ def alarm_ring(events_now):
         events_alarm.append((event.key, event.val))
     ring_thread = Thread(target=ring, daemon=True)
     ring_thread.start()
-    i = grid_print(alarm_window, events_alarm, height= 40, width=40)
-    ttk.Button(alarm_window, text="Ok", width=20, command=lambda: [button_clicked("o"), alarm_window.destroy()]).pack()
+    alarm_listbox = grid_print(alarm_window, events_alarm,  height= 40, width=40)
+    buttom_width = 30
+    ttk.Button(alarm_window, text="Ok", width=buttom_width,
+               command=lambda: [button_clicked("o"), alarm_window.destroy()]).pack()
+
+    ttk.Button(alarm_window, text="Deletar alarmes selecionados", width=buttom_width,
+               command=lambda: [button_clicked("o"),
+                                delete_selected_events(alarm_listbox, events_now),
+                                alarm_window.destroy(), refresh_listbox(window, main_listbox, events)]).pack()
+
+    ttk.Button(alarm_window, text="Deletar todos esses alarmes", width=buttom_width,
+               command=lambda: [button_clicked("o"), alarm_window.destroy(),
+                                delete_events(events_now),
+                                refresh_listbox(window, main_listbox, events)]).pack()
 
     alarm_window.lift()
     alarm_window.attributes('-topmost', True)
@@ -193,11 +222,12 @@ def ring():
         playsound(chosen_ring)
     return
 
+
 dbx = Dbx()
 events = RedBlackTree()
 load_events()
 
-#Parte gráfica
+# Parte gráfica
 
 window = tk.Tk()
 window.title("Agenda")
@@ -207,13 +237,12 @@ window_height = 600
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 
-center_x = int(screen_width/2 - window_width / 2)
-center_y = int(screen_height/2 - window_height / 2)
+center_x = int(screen_width / 2 - window_width / 2)
+center_y = int(screen_height / 2 - window_height / 2)
 
 window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 window.minsize(200, 300)
 window.maxsize(screen_width, screen_height)
-
 
 if len(argv) > 1:
     i = 0
@@ -233,11 +262,11 @@ else:
     alarm_thread = Thread(target=alarm, daemon=True)
     alarm_thread.start()
 
-    grid_print(window, events)
+    main_listbox = grid_print(window, events)
     ttk.Button(window, text="ver eventos", width=20, command=lambda: button_clicked("v")).pack(pady=2)
-    ttk.Button(window, text="adicionar evento",width=20, command=lambda: button_clicked("a")).pack(pady=2)
-    ttk.Button(window, text="deletar evento", width=20,command=lambda: button_clicked("d")).pack(pady=2)
-    ttk.Button(window, text="sincronizar com dropbox", width=20,command=lambda: button_clicked("sync")).pack(pady=2)
-    ttk.Button(window, text="parar alarme", width=20,command=lambda: button_clicked("o")).pack(pady=2)
-    ttk.Button(window, text="sair", width=20,command=lambda: button_clicked("q")).pack(pady=2)
+    ttk.Button(window, text="adicionar evento", width=20, command=lambda: button_clicked("a")).pack(pady=2)
+    ttk.Button(window, text="deletar evento", width=20, command=lambda: button_clicked("d")).pack(pady=2)
+    ttk.Button(window, text="sincronizar com dropbox", width=20, command=lambda: button_clicked("sync")).pack(pady=2)
+    ttk.Button(window, text="parar alarme", width=20, command=lambda: button_clicked("o")).pack(pady=2)
+    ttk.Button(window, text="sair", width=20, command=lambda: button_clicked("q")).pack(pady=2)
     window.mainloop()
