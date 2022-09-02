@@ -13,7 +13,7 @@ from dbx import *
 from os import listdir
 from os.path import isfile, join
 
-event = ""
+event_string = ""
 alarm_on = False
 op_it_string = "v: ver eventos, a: adicionar, s: salvar, d: deletar, " \
                "escolher som do alarme: e, sync: sincronizar, o: parar alarme, q: sair> "
@@ -22,35 +22,9 @@ chosen_ring = alarms_path + "mixkit-scanning-sci-fi-alarm-905.mp3"
 options_array = ["ver eventos", "adicionar eventos",
                  "salvar", "deletar", "sincronizar com dropbox", "parar alarme", "sair"]
 currently_selected = []
-
-
-def button_clicked(option):
-    print("Buttom clicked: " + option)
-    options(option)
-
-
-def options(option=None):
-    if option is None:
-        option = input(op_it_string)
-    match option:
-        case 'v':
-            refresh_listbox(window, main_listbox, events)
-        case 'a':
-            add_events_gui()
-        case 'e':
-            load_alarms()
-        case 's':
-            save()
-        case 'd':
-            delete_event()
-        case 'q':
-            exit_program()
-        case 'sync':
-            sync_events()
-        case 'o':
-            global alarm_on
-            alarm_on = False
-            pass
+def alarm_off():
+    global alarm_on
+    alarm_on = False
 
 
 def load_alarms():
@@ -83,27 +57,17 @@ def load_events():
 
 
 def retrieve_input(hour_box, day_box, description_box):
-    global event
+    global event_string
     hour = hour_box.get("1.0", 'end-1c')
     day = day_box.get("1.0", 'end-1c')
     description = description_box.get("1.0", 'end-1c')
-    event = ""
-    event = day + ";" + hour + ";" + description
-    print(event)
+    event_string = ""
+    event_string = day.strip() + ";" + hour.strip() + ";" + description.strip()
 
 
 def add_events_gui():
-    global event
-    add_event_window = tk.Tk()
-    add_event_window.title("ALARME")
-    add_event_window_width = 550
-    add_event_window_height = 250
-
-    add_event_center_x = int(screen_width / 2 - add_event_window_width / 2)
-    add_event_center_y = int(screen_height / 2 - add_event_window_height / 2)
-
-    add_event_window.geometry(f'{add_event_window_width}x'
-                              f'{add_event_window_height}+{add_event_center_x}+{add_event_center_y}')
+    global event_string
+    add_event_window = open_centered_window("Adicionar evento", 550, 250)
     day_label = ttk.Label(add_event_window, text="Dia")
     day_label.pack()
     day_text_box = tk.Text(add_event_window, height=1, width=15)
@@ -120,21 +84,23 @@ def add_events_gui():
     description_text_box.pack()
     ttk.Button(add_event_window, text="adicionar evento", width=20,
                command=lambda: [retrieve_input(hour_text_box, day_text_box,
-                                               description_text_box), add_events(event),
+                                               description_text_box), add_events(event_string),
                                 add_event_window.destroy(),
-                                refresh_listbox(window, main_listbox, events)]).pack(pady=15)
+                                refresh_listbox(main_listbox, events)]).pack(pady=15)
 
     add_event_window.mainloop()
+
 
 def add_events(event_parameter=None):
     if event_parameter is None:
         return
 
-    print("HERE")
-    global event
-    event_parameter = event
-    event = None
-    print("###", event_parameter)
+    global event_string
+    event_parameter = event_string
+    event_string = None
+    if event_parameter is None:
+        return
+
     event_parameter = event_parameter.split(';')
     event_date_str = [int(x) for x in event_parameter[0].split("/")]
     event_time_str = [int(x) for x in event_parameter[1].split(":")]
@@ -183,17 +149,18 @@ def sync_events():
             dbx.login()
         except Exception:
             return
+    sync_window = open_centered_window("Sync com o Dropbox", 350, 150)
+    ttk.Button(sync_window, text="Baixar a versão do Dropbox",
+               command=lambda: [dbx.download_file(), load_events(),
+                                refresh_listbox(main_listbox, events), sync_window.destroy()]).pack(pady=5)
+    ttk.Button(sync_window, text="upar a versão para o Dropbox",
+               command=lambda: [save(), dbx.upload_file(), sync_window.destroy()]).pack(pady=5)
+    ttk.Button(sync_window, text="Ver menu principal",
+               command=lambda: sync_window.destroy()).pack(pady=5)
 
-    op = input("b: baixar a versão do dropbox, u: upar a versão para o dropbox, m:ver menu principal: ")
-    if op == "b":
-        dbx.download_file()
-        load_events()
-    elif op == "u":
-        save()
-        dbx.upload_file()
-    elif op == "m":
-        return
-    return
+    sync_window.lift()
+    sync_window.attributes('-topmost', True)
+    sync_window.mainloop()
 
 
 def alarm():
@@ -207,7 +174,7 @@ def alarm():
         sleep(60)
 
 
-def refresh_listbox(window, listbox, events):
+def refresh_listbox(listbox, events):
     listbox.delete(0, tk.END)
     events_list = get_events(events)
     for event in events_list:
@@ -219,34 +186,22 @@ def delete_events(events_now):
         events.delete(event.key)
 
 
-def delete_selected_events(listbox, events_list=None):
+def delete_selected_events(listbox=None, events_list=None):
     if events_list:
         for event_index in listbox.curselection():
             events.delete(events_list[event_index].key)
         return
-
-    keys_to_delete = []
-    for event_index in listbox.curselection():
-        keys_to_delete.append(get_nth(events, event_index))
+    curse_selection = list(listbox.curselection())
+    if not curse_selection:
+        return
+    keys_to_delete = get_keys_by_index(events, curse_selection)
     for key in keys_to_delete:
         events.delete(key)
     return
 
 
 def alarm_ring(events_now):
-    print("ALARME")
-    alarm_window = tk.Tk()
-    alarm_window.title("ALARME")
-    window_width = 550
-    window_height = 250
-
-    screen_width = alarm_window.winfo_screenwidth()
-    screen_height = alarm_window.winfo_screenheight()
-
-    center_x = int(screen_width / 2 - window_width / 2)
-    center_y = int(screen_height / 2 - window_height / 2)
-
-    alarm_window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+    alarm_window = open_centered_window("Alarme", 550, 250)
     events_alarm = []
     for event in events_now:
         events_alarm.append((event.key, event.val))
@@ -255,24 +210,22 @@ def alarm_ring(events_now):
     alarm_listbox = grid_print(alarm_window, events_alarm, height=40, width=40)
     buttom_width = 30
     ttk.Button(alarm_window, text="Ok", width=buttom_width,
-               command=lambda: [button_clicked("o"), alarm_window.destroy()]).pack()
+               command=lambda: [alarm_off(), alarm_window.destroy()]).pack()
 
     ttk.Button(alarm_window, text="Deletar alarmes selecionados", width=buttom_width,
-               command=lambda: [button_clicked("o"),
+               command=lambda: [alarm_off(),
                                 delete_selected_events(alarm_listbox, events_now),
-                                alarm_window.destroy(), refresh_listbox(window, main_listbox, events)]).pack()
+                                alarm_window.destroy(), refresh_listbox(main_listbox, events)]).pack()
 
     ttk.Button(alarm_window, text="Deletar todos esses alarmes", width=buttom_width,
-               command=lambda: [button_clicked("o"), alarm_window.destroy(),
+               command=lambda: [alarm_off(), alarm_window.destroy(),
                                 delete_events(events_now),
-                                refresh_listbox(window, main_listbox, events)]).pack()
+                                refresh_listbox(main_listbox, events)]).pack()
 
     alarm_window.lift()
     alarm_window.attributes('-topmost', True)
-
     alarm_window.mainloop()
     return
-
 
 def ring():
     global alarm_on
@@ -282,26 +235,14 @@ def ring():
     return
 
 
+
 dbx = Dbx()
 events = RedBlackTree()
 load_events()
 
 # Parte gráfica
 
-window = tk.Tk()
-window.title("Agenda")
-window_width = 800
-window_height = 600
-
-screen_width = window.winfo_screenwidth()
-screen_height = window.winfo_screenheight()
-
-center_x = int(screen_width / 2 - window_width / 2)
-center_y = int(screen_height / 2 - window_height / 2)
-
-window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
-window.minsize(200, 300)
-window.maxsize(screen_width, screen_height)
+main_window = open_centered_window("Agenda", 800, 600)
 
 if len(argv) > 1:
     i = 0
@@ -321,13 +262,20 @@ else:
     alarm_thread = Thread(target=alarm, daemon=True)
     alarm_thread.start()
 
-    main_listbox = grid_print(window, events)
-    ttk.Button(window, text="atualizar eventos", width=20, command=lambda: button_clicked("v")).pack(pady=2)
-    ttk.Button(window, text="adicionar evento", width=20, command=lambda: button_clicked("a")).pack(pady=2)
-    ttk.Button(window, text="deletar evento", width=20,
+    main_listbox = grid_print(main_window, events)
+    ttk.Button(main_window, text="atualizar eventos", width=20,
+               command=lambda: refresh_listbox(main_listbox, events)).pack(pady=2)
+    ttk.Button(main_window, text="adicionar evento", width=20,
+               command=lambda: add_events_gui()).pack(pady=2)
+    ttk.Button(main_window, text="deletar evento", width=20,
                command=lambda: [delete_selected_events(listbox=main_listbox),
-                                refresh_listbox(window, main_listbox, events)]).pack(pady=2)
-    ttk.Button(window, text="sincronizar com dropbox", width=20, command=lambda: button_clicked("sync")).pack(pady=2)
-    ttk.Button(window, text="parar alarme", width=20, command=lambda: button_clicked("o")).pack(pady=2)
-    ttk.Button(window, text="sair", width=20, command=lambda: button_clicked("q")).pack(pady=2)
-    window.mainloop()
+                                refresh_listbox(main_listbox, events)]).pack(pady=2)
+    ttk.Button(main_window, text="salvar", width=20,
+               command=lambda: save()).pack(pady=2)
+    ttk.Button(main_window, text="sincronizar com dropbox", width=20,
+               command=lambda:  sync_events()).pack(pady=2)
+    ttk.Button(main_window, text="parar alarme", width=20,
+               command=lambda: alarm_off()).pack(pady=2)
+    ttk.Button(main_window, text="sair", width=20,
+               command=lambda: exit_program()).pack(pady=2)
+    main_window.mainloop()

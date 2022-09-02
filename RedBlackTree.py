@@ -238,11 +238,11 @@ class RedBlackTree:
         else:
             node.val = val
 
-        if (is_red(node.right) and (not is_red(node.left))):
+        if is_red(node.right) and (not is_red(node.left)):
             node = rotate_left(node)
-        if (is_red(node.left) and is_red(node.left.left)):
+        if is_red(node.left) and is_red(node.left.left):
             node = rotate_right(node)
-        if (is_red(node.left) and is_red(node.right)):
+        if is_red(node.left) and is_red(node.right):
             flip_colors(node)
         node.size = size(node.left) + size(node.right) + 1
 
